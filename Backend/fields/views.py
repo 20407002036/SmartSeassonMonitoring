@@ -102,10 +102,10 @@ class FieldStageUpdateView(APIView):
 
 		serializer = FieldStageUpdateSerializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
-		field.current_stage = serializer.validated_data["current_stage"]
-		field.save(update_fields=["current_stage", "updated_at"])
 
 		with transaction.atomic():
+			field.current_stage = serializer.validated_data["current_stage"]
+			field.save(update_fields=["current_stage", "updated_at"])
 			create_admin_notifications(field=field, new_status=field.current_stage)
 
 		return Response(FieldDetailSerializer(field).data)
