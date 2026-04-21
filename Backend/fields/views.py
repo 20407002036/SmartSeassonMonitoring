@@ -112,6 +112,10 @@ class FieldStageUpdateView(APIView):
 			field.save(update_fields=["current_stage", "updated_at"])
 			create_admin_notifications(field=field, new_status=field.current_stage)
 
+		field = get_object_or_404(
+			Field.objects.select_related("assigned_to", "assigned_by").prefetch_related("notes__author"),
+			pk=field.pk,
+		)
 		return Response(FieldDetailSerializer(field).data)
 
 
