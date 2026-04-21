@@ -20,12 +20,16 @@ from notifications.serializers import NotificationSerializer
 from users.models import User
 
 
-def get_field_queryset_for_user(user):
+def get_field_queryset_for_user(user, include_notes=False):
 	if user.is_admin:
-		return Field.objects.select_related("assigned_to", "assigned_by").prefetch_related("notes__author")
-	return Field.objects.filter(assigned_to=user).select_related("assigned_to", "assigned_by").prefetch_related("notes__author")
+		queryset = Field.objects.select_related("assigned_to", "assigned_by")
+	else:
+		queryset = Field.objects.filter(assigned_to=user).select_related("assigned_to", "assigned_by")
 
+	if include_notes:
+		queryset = queryset.prefetch_related("notes__author")
 
+	return queryset
 def create_admin_notifications(field, new_status, note=None):
 	admin_users = User.objects.filter(role=User.Role.ADMIN)
 	notifications = [
@@ -74,7 +78,13 @@ class FieldDetailUpdateView(APIView):
 		return Response(FieldDetailSerializer(field).data)
 
 	def patch(self, request, pk):
-		return self.put(request, pk)
+		field = self.get_object(request, pk)
+		if not request.user.is_admin:
+			return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+		serializer = FieldWriteSerializer(field, data=request.data, partial=True)
+		serializer.is_valid(raise_exception=True)
+		field = serializer.save(assigned_by=field.assigned_by or request.user)
+		return Response(FieldDetailSerializer(field).data)
 
 
 class FieldAssignView(APIView):
@@ -89,6 +99,10 @@ class FieldAssignView(APIView):
 		field.assigned_to = serializer.validated_data["assigned_to"]
 		field.assigned_by = request.user
 		field.save(update_fields=["assigned_to", "assigned_by", "updated_at"])
+		field = get_object_or_404(
+			Field.objects.select_related("assigned_to", "assigned_by").prefetch_related("notes__author"),
+			pk=field.pk,
+		)
 		return Response(FieldDetailSerializer(field).data)
 
 
@@ -102,12 +116,13 @@ class FieldStageUpdateView(APIView):
 
 		serializer = FieldStageUpdateSerializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
-		field.current_stage = serializer.validated_data["current_stage"]
-		field.save(update_fields=["current_stage", "updated_at"])
 
 		with transaction.atomic():
+			field.current_stage = serializer.validated_data["current_stage"]
+			field.save(update_fields=["current_stage", "updated_at"])
 			create_admin_notifications(field=field, new_status=field.current_stage)
 
+		field = Field.objects.select_related("assigned_to", "assigned_by").prefetch_related("notes__author").get(pk=field.pk)
 		return Response(FieldDetailSerializer(field).data)
 
 
