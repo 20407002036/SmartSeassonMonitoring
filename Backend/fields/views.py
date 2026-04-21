@@ -89,6 +89,10 @@ class FieldAssignView(APIView):
 		field.assigned_to = serializer.validated_data["assigned_to"]
 		field.assigned_by = request.user
 		field.save(update_fields=["assigned_to", "assigned_by", "updated_at"])
+		field = get_object_or_404(
+			Field.objects.select_related("assigned_to", "assigned_by").prefetch_related("notes__author"),
+			pk=field.pk,
+		)
 		return Response(FieldDetailSerializer(field).data)
 
 
