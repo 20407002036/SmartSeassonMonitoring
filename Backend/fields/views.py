@@ -20,12 +20,16 @@ from notifications.serializers import NotificationSerializer
 from users.models import User
 
 
-def get_field_queryset_for_user(user):
+def get_field_queryset_for_user(user, include_notes=False):
 	if user.is_admin:
-		return Field.objects.select_related("assigned_to", "assigned_by").prefetch_related("notes__author")
-	return Field.objects.filter(assigned_to=user).select_related("assigned_to", "assigned_by").prefetch_related("notes__author")
+		queryset = Field.objects.select_related("assigned_to", "assigned_by")
+	else:
+		queryset = Field.objects.filter(assigned_to=user).select_related("assigned_to", "assigned_by")
 
+	if include_notes:
+		queryset = queryset.prefetch_related("notes__author")
 
+	return queryset
 def create_admin_notifications(field, new_status, note=None):
 	admin_users = User.objects.filter(role=User.Role.ADMIN)
 	notifications = [
