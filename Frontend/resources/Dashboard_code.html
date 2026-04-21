@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SmartSeason Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#623400",
+                        "on-surface": "#191c1d",
+                        "on-primary-container": "#00331d",
+                        "surface": "#f8fafb",
+                        "outline": "#6d7a70",
+                        "primary-fixed": "#78fbb6",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#59de9b",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#2e1500",
+                        "on-primary-fixed-variant": "#005232",
+                        "on-secondary-fixed-variant": "#6d3a00",
+                        "background": "#f8fafb",
+                        "surface-tint": "#006d43",
+                        "primary-container": "#00a86b",
+                        "on-primary-fixed": "#002111",
+                        "inverse-on-surface": "#eff1f2",
+                        "surface-container-high": "#e6e8e9",
+                        "tertiary": "#4c616c",
+                        "surface-bright": "#f8fafb",
+                        "inverse-primary": "#59de9b",
+                        "secondary-container": "#ff8f00",
+                        "on-background": "#191c1d",
+                        "on-surface-variant": "#3d4a41",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#8096a1",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#eceeef",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f5",
+                        "surface-dim": "#d8dadb",
+                        "tertiary-fixed-dim": "#b4cad6",
+                        "on-tertiary-fixed-variant": "#354a53",
+                        "outline-variant": "#bccabe",
+                        "on-tertiary-container": "#192e37",
+                        "inverse-surface": "#2e3132",
+                        "secondary": "#8f4e00",
+                        "secondary-fixed-dim": "#ffb77a",
+                        "surface-container-highest": "#e1e3e4",
+                        "tertiary-fixed": "#cfe6f2",
+                        "on-tertiary-fixed": "#071e27",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdcc2",
+                        "primary": "#006d43"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white/80 backdrop-blur-xl transition-colors">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-emerald-900">SmartSeason</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-emerald-700 border-b-2 border-emerald-600 font-semibold px-1 py-1 transition-colors" href="#">Dashboard</a>
+<a class="text-slate-500 hover:text-emerald-600 px-1 py-1 transition-colors" href="#">Field Map</a>
+<a class="text-slate-500 hover:text-emerald-600 px-1 py-1 transition-colors" href="#">Reports</a>
+<a class="text-slate-500 hover:text-emerald-600 px-1 py-1 transition-colors" href="#">Schedule</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-100/50 p-2 rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-100/50 p-2 rounded-full transition-colors" data-icon="settings">settings</button>
+<img alt="User avatar" class="w-8 h-8 rounded-full border border-outline-variant/20" data-alt="Professional headshot of a senior agriculture administrator with a friendly expression in a modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYsPl-PhvmDnDAe5EiQXzoiBxvVnJF_BtdEft-ZgPia_vmZrdc97q-Rijwjdu3DttekiuHlM-HA8TJjn-3QRcNuY2ugkKoPPWxVp7h3p916V8rZpvrORSwPV11Xb7ak2qzkn2ZVDo8bB6DRpCabjCdtwNEnOeW3jC-nVHkRlEtv2NSreJ1H1P_36Z68em4-pxPGviBJ484Dm4j0KAeI_ondkQY6MTWOS-zjmrG0GZwusfhNsaAQIzTQ70in-a-wTCQtuzW63hLLQ"/>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 pt-20 pb-6 px-4 space-y-4 bg-slate-50 transition-colors">
+<div class="px-4 mb-6">
+<h2 class="text-lg font-black text-emerald-900 uppercase tracking-tight">Admin Console</h2>
+<p class="text-xs text-on-surface-variant font-medium">Precision Arable Editorial</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-emerald-800 font-bold bg-white rounded-lg shadow-sm group" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-headline text-sm">Admin Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:pl-6 transition-all hover:bg-emerald-50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="agriculture">agriculture</span>
+<span class="font-headline text-sm">Field Operations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:pl-6 transition-all hover:bg-emerald-50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-headline text-sm">Resource Allocation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:pl-6 transition-all hover:bg-emerald-50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-headline text-sm">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:pl-6 transition-all hover:bg-emerald-50 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-headline text-sm">User Management</span>
+</a>
+</nav>
+<div class="pt-4">
+<button class="w-full py-3 px-4 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/10 hover:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Field Scan
+            </button>
+</div>
+<div class="pt-4 border-t border-outline-variant/10 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 text-sm hover:text-emerald-700 transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dns">dns</span>
+                System Status
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 text-sm hover:text-emerald-700 transition-colors" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="help">help</span>
+                Help Center
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-24 px-6 pb-24 md:pb-8">
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+<div>
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tight leading-none mb-2">Admin Overview</h1>
+<p class="text-on-surface-variant text-sm font-medium">Monitoring crop health and field logistics across 1,240 hectares.</p>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-3 rounded-xl font-bold shadow-xl shadow-primary/20 hover:scale-[0.98] transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                Create Field
+            </button>
+</div>
+<!-- Summary Cards: Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-emerald-500/30">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Total Fields</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black text-on-surface tracking-tighter">48</span>
+<span class="text-emerald-600 text-xs font-bold flex items-center">+2 this month</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary/30">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Active Fields</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black text-on-surface tracking-tighter">32</span>
+<div class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse mb-1"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-secondary-container/30">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">At Risk Fields</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black text-on-surface tracking-tighter">4</span>
+<span class="text-on-secondary-container text-xs font-bold px-2 py-0.5 bg-secondary-container rounded-full">Requires Action</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-tertiary-container/30">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Completed Fields</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black text-on-surface tracking-tighter">12</span>
+<span class="material-symbols-outlined text-tertiary-container" data-icon="inventory">inventory</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-10">
+<!-- Data Table: All Fields -->
+<div class="xl:col-span-2">
+<div class="bg-surface-container-low rounded-xl p-1 overflow-hidden">
+<div class="bg-surface-container-lowest rounded-lg overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50">
+<th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-on-surface-variant">Name</th>
+<th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-on-surface-variant">Crop</th>
+<th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-on-surface-variant">Stage</th>
+<th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-on-surface-variant text-right">Status Badge</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant/20">
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Field A-12</span>
+<span class="text-xs text-on-surface-variant">Northern Sector</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium">Winter Wheat</td>
+<td class="px-6 py-5 text-sm">Growing stage</td>
+<td class="px-6 py-5 text-right">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-black uppercase tracking-tighter rounded-full">Growth</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low/10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Sector Delta-4</span>
+<span class="text-xs text-on-surface-variant">Eastern Basin</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium">Soybeans</td>
+<td class="px-6 py-5 text-sm">Seedling</td>
+<td class="px-6 py-5 text-right">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-black uppercase tracking-tighter rounded-full">At Risk</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Valley 09</span>
+<span class="text-xs text-on-surface-variant">Southern Reach</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium">Maize</td>
+<td class="px-6 py-5 text-sm">Flowering</td>
+<td class="px-6 py-5 text-right">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-black uppercase tracking-tighter rounded-full">Stable</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low/10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Plateau C-1</span>
+<span class="text-xs text-on-surface-variant">Uplands</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium">Barley</td>
+<td class="px-6 py-5 text-sm">Ripening</td>
+<td class="px-6 py-5 text-right">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-black uppercase tracking-tighter rounded-full">Growth</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Recent Updates Feed: Editorial Style -->
+<div class="space-y-6">
+<div class="flex justify-between items-baseline">
+<h3 class="text-xl font-bold tracking-tight">Recent Updates</h3>
+<a class="text-xs font-bold text-primary hover:underline" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<!-- Update Item -->
+<div class="flex gap-4 p-4 bg-surface-container-lowest rounded-xl relative group overflow-hidden">
+<div class="absolute left-0 top-0 h-full w-1 bg-primary/20 group-hover:bg-primary transition-colors"></div>
+<img alt="Sarah avatar" class="w-10 h-10 rounded-full object-cover shrink-0" data-alt="Close up portrait of a professional female field agent wearing an outdoor work shirt, warm afternoon sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXjKnQzsweZptvS-S9fys5bWHwWj64MFr4ZdgwfBacfspyZx28glFGiEb2QqLweW8ojKIWK-1bm88PzMsVzEJk25qsg5Zkvq5hvwMnaYswMHIHIThHrOfYobG9DSPRo9cOJ_j90IHghQy6lWWReYOB78Np2Z1H6zdmbWuBn_KNDEc6M8XeFvf9w4m1ufaGHWi50K8ScUcWEOvgTAis_dXtsIuXJPWRHBkWDt8uUot2-gm8F2pWNogW9QWOC3E3CC053mUGJk5_DQ"/>
+<div>
+<p class="text-sm leading-relaxed text-on-surface">
+<span class="font-bold">Agent Sarah</span> updated <span class="font-bold text-primary">Field A-12</span> to Growing stage.
+                            </p>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mt-1">24 minutes ago</span>
+</div>
+</div>
+<!-- Update Item -->
+<div class="flex gap-4 p-4 bg-surface-container-lowest rounded-xl relative group overflow-hidden">
+<div class="absolute left-0 top-0 h-full w-1 bg-secondary-container group-hover:bg-secondary transition-colors"></div>
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary" data-icon="priority_high">priority_high</span>
+</div>
+<div>
+<p class="text-sm leading-relaxed text-on-surface">
+<span class="font-bold">System Alert:</span> Moisture levels dropping in <span class="font-bold text-secondary">Delta-4</span>.
+                            </p>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mt-1">1 hour ago</span>
+</div>
+</div>
+<!-- Update Item -->
+<div class="flex gap-4 p-4 bg-surface-container-lowest rounded-xl relative group overflow-hidden">
+<div class="absolute left-0 top-0 h-full w-1 bg-tertiary-container group-hover:bg-tertiary transition-colors"></div>
+<img alt="Marcus avatar" class="w-10 h-10 rounded-full object-cover shrink-0" data-alt="Professional female agronomist with a tablet in a bright greenhouse, sharp focus, natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYBywim2gqZeqLv3Y7GFjd8gtrVmRdmT1ngMJfjnsxL93steklt8VEhU3WkE_UZirqlqnIv2IYudAj6fW3ZFXZNfsq6F1IXHo7km5yqsWs7lf400-inOj6hd3ejdsHYy9nRJH4qn7-GF4K0KaysLnq0TeaI5DeeAl0H7vKnC5QhdMRm6RW9YheNRB7dUFub8VBZO4pjq31CDnglzYt_69PUgoLnz_c_EE18hEz2uNUmouWOtrlct-A6qiIrHppRsaUE5T1kDSOCw"/>
+<div>
+<p class="text-sm leading-relaxed text-on-surface">
+<span class="font-bold">Admin Marcus</span> assigned new harvester to <span class="font-bold text-emerald-800">Valley 09</span>.
+                            </p>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mt-1">3 hours ago</span>
+</div>
+</div>
+</div>
+<!-- Vitality Gauge Signature Component -->
+<div class="bg-surface-container-high rounded-2xl p-8 text-center">
+<p class="text-xs font-black uppercase tracking-widest text-on-tertiary-container mb-6">Aggregate Soil Health</p>
+<div class="relative inline-flex items-center justify-center mb-4">
+<!-- Progress Circle (SVG) -->
+<svg class="w-32 h-32 transform -rotate-90">
+<circle class="text-surface-variant" cx="64" cy="64" fill="transparent" r="56" stroke="currentColor" stroke-width="12"></circle>
+<circle cx="64" cy="64" fill="transparent" r="56" stroke="url(#vitalityGradient)" stroke-dasharray="351.85" stroke-dashoffset="52.77" stroke-width="12"></circle>
+<defs>
+<lineargradient id="vitalityGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#006d43"></stop>
+<stop offset="100%" stop-color="#00a86b"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="absolute flex flex-col">
+<span class="text-3xl font-black text-on-surface">85%</span>
+<span class="text-[10px] font-bold text-primary uppercase">Optimal</span>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed max-w-[200px] mx-auto">Seasonal performance is 12% higher than last year's average.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex lg:hidden justify-around items-center px-4 py-3 pb-safe bg-white/90 backdrop-blur-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-xl px-4 py-1 transition-transform scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-bold uppercase tracking-wider mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-[10px] font-bold uppercase tracking-wider mt-1">My Fields</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="text-[10px] font-bold uppercase tracking-wider mt-1">Alerts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-[10px] font-bold uppercase tracking-wider mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

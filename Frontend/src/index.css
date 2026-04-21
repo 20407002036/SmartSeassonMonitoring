@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-headline: 'Manrope', 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+
+  --color-primary: #006d43;
+  --color-primary-container: #00a86b;
+  --color-primary-fixed: #78fbb6;
+  --color-primary-fixed-dim: #59de9b;
+  --color-on-primary: #ffffff;
+  --color-on-primary-fixed: #002111;
+
+  --color-secondary: #8f4e00;
+  --color-secondary-container: #ff8f00;
+  --color-on-secondary-container: #623400;
+
+  --color-tertiary: #4c616c;
+  --color-tertiary-fixed: #cfe6f2;
+  --color-tertiary-fixed-dim: #b4cad6;
+  --color-on-tertiary-fixed: #071e27;
+
+  --color-background: #f8fafb;
+  --color-surface: #f8fafb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f5;
+  --color-surface-container-high: #e6e8e9;
+  --color-surface-container-highest: #e1e3e4;
+  --color-on-surface: #191c1d;
+  --color-on-surface-variant: #3d4a41;
+  --color-outline-variant: #bccabe;
+  --color-error: #ba1a1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-on-surface);
+  background:
+    radial-gradient(circle at 15% -20%, rgba(0, 168, 107, 0.14), transparent 42%),
+    radial-gradient(circle at 85% 10%, rgba(120, 251, 182, 0.14), transparent 38%),
+    var(--color-background);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-headline);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main > section {
+  animation: fade-up 300ms ease-out;
+}
