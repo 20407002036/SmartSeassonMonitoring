@@ -74,7 +74,13 @@ class FieldDetailUpdateView(APIView):
 		return Response(FieldDetailSerializer(field).data)
 
 	def patch(self, request, pk):
-		return self.put(request, pk)
+		field = self.get_object(request, pk)
+		if not request.user.is_admin:
+			return Response({"detail": "Admin access required."}, status=status.HTTP_403_FORBIDDEN)
+		serializer = FieldWriteSerializer(field, data=request.data, partial=True)
+		serializer.is_valid(raise_exception=True)
+		field = serializer.save(assigned_by=field.assigned_by or request.user)
+		return Response(FieldDetailSerializer(field).data)
 
 
 class FieldAssignView(APIView):
