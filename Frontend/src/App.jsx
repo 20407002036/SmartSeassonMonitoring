@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import LoginPage from './pages/LoginPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AgentDashboardPage from './pages/AgentDashboardPage'
@@ -8,6 +8,18 @@ import AssignmentPage from './pages/AssignmentPage'
 import UpdateModal from './components/UpdateModal'
 import ToastStack from './components/ToastStack'
 import { STAGE_PROGRESS, initialFields, initialRecentUpdates, users } from './data/mockData'
+import {
+  API_ENABLED,
+  assignField,
+  createField,
+  createFieldNote,
+  getCurrentUser,
+  hasAccessToken,
+  listFields,
+  loginUser,
+  logoutUser as apiLogoutUser,
+  updateFieldStage,
+} from './api'
 
 const stageToStatus = {
   Harvested: 'Completed',
@@ -26,13 +38,33 @@ function App() {
   const [updateFieldId, setUpdateFieldId] = useState(null)
   const [toasts, setToasts] = useState([])
 
-  const agents = useMemo(() => users.filter((user) => user.role === 'agent'), [])
+  const agents = useMemo(() => {
+    if (!API_ENABLED) {
+      return users.filter((user) => user.role === 'agent')
+    }
+
+    const fromFields = fields.reduce((accumulator, field) => {
+      if (!field.assignedAgent) {
+        return accumulator
+      }
+
+      accumulator[field.assignedAgent.id] = {
+        id: field.assignedAgent.id,
+        role: 'agent',
+        name: field.assignedAgent.name,
+        email: field.assignedAgent.email,
+      }
+      return accumulator
+    }, {})
+
+    return Object.values(fromFields)
+  }, [fields])
   const agentsById = useMemo(() => {
-    return users.reduce((accumulator, user) => {
+    return agents.reduce((accumulator, user) => {
       accumulator[user.id] = user
       return accumulator
     }, {})
-  }, [])
+  }, [agents])
 
   const selectedField = fields.find((field) => field.id === selectedFieldId) || null
   const modalField = fields.find((field) => field.id === updateFieldId) || null
@@ -45,7 +77,62 @@ function App() {
     }, 3800)
   }
 
-  const handleLogin = ({ email, password }) => {
+  useEffect(() => {
+    if (!API_ENABLED || !hasAccessToken()) {
+      return
+    }
+
+    let isMounted = true
+
+    async function bootstrapSession() {
+      try {
+        const [user, apiFields] = await Promise.all([getCurrentUser(), listFields()])
+        if (!isMounted) {
+          return
+        }
+
+        setCurrentUser(user)
+        setFields(apiFields)
+        setSelectedFieldId(apiFields[0]?.id || null)
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setCurrentUser(null)
+      }
+    }
+
+    bootstrapSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleLogin = async ({ email, password }) => {
+    if (API_ENABLED) {
+      try {
+        await loginUser({
+          identifier: email,
+          password,
+        })
+
+        const [user, apiFields] = await Promise.all([getCurrentUser(), listFields()])
+
+        setLoginError('')
+        setCurrentUser(user)
+        setFields(apiFields)
+        setSelectedFieldId(apiFields[0]?.id || null)
+        setActivePage('dashboard')
+        addToast(`Signed in as ${user.name}`)
+      } catch (error) {
+        setLoginError(error?.message || 'Unable to sign in. Please verify credentials and backend availability.')
+      }
+
+      return
+    }
+
     const matched = users.find(
       (user) => user.email.toLowerCase() === email.toLowerCase() && user.password === password,
     )
@@ -61,13 +148,37 @@ function App() {
     addToast(`Signed in as ${matched.name}`)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (API_ENABLED) {
+      await apiLogoutUser()
+    }
+
     setCurrentUser(null)
     setActivePage('dashboard')
     setLoginError('')
   }
 
-  const handleAssignAgent = (fieldId, agentId) => {
+  const handleAssignAgent = async (fieldId, agentId) => {
+    if (API_ENABLED) {
+      try {
+        const updatedField = await assignField(fieldId, agentId || null)
+
+        setFields((previous) =>
+          previous.map((field) => (field.id === fieldId ? { ...field, ...updatedField } : field)),
+        )
+
+        const agentName = agentsById[agentId]?.name || 'Unassigned'
+        const target = fields.find((field) => field.id === fieldId)
+        if (target) {
+          addToast(`${target.name} assigned to ${agentName}`)
+        }
+      } catch (error) {
+        addToast(error?.message || 'Assignment failed.')
+      }
+
+      return
+    }
+
     setFields((previous) =>
       previous.map((field) =>
         field.id === fieldId
@@ -86,7 +197,28 @@ function App() {
     }
   }
 
-  const handleCreateField = () => {
+  const handleCreateField = async () => {
+    if (API_ENABLED) {
+      try {
+        const now = new Date().toISOString().slice(0, 10)
+        const createdField = await createField({
+          name: `New Plot ${fields.length + 1}`,
+          cropType: 'Cassava',
+          plantingDate: now,
+          currentStage: 'Planted',
+          assignedAgentId: null,
+        })
+
+        setFields((previous) => [createdField, ...previous])
+        setSelectedFieldId(createdField.id)
+        addToast('New field created.')
+      } catch (error) {
+        addToast(error?.message || 'Field creation failed.')
+      }
+
+      return
+    }
+
     const now = new Date().toISOString().slice(0, 10)
     const id = `field-${fields.length + 1}`
     const newField = {
@@ -115,8 +247,59 @@ function App() {
     setUpdateFieldId(fieldId)
   }
 
-  const handleSubmitUpdate = (fieldId, payload) => {
+  const handleSubmitUpdate = async (fieldId, payload) => {
     if (!currentUser) {
+      return
+    }
+
+    if (API_ENABLED) {
+      try {
+        const updatedField = await updateFieldStage(fieldId, payload.stage)
+        const createdNote = payload.note?.trim()
+          ? await createFieldNote(fieldId, payload.note.trim())
+          : null
+
+        setFields((previous) =>
+          previous.map((field) => {
+            if (field.id !== fieldId) {
+              return field
+            }
+
+            const update = {
+              id: crypto.randomUUID(),
+              by: currentUser.name,
+              at: new Date().toISOString(),
+              stage: payload.stage,
+              status: updatedField.status,
+              note: payload.note,
+            }
+
+            return {
+              ...field,
+              ...updatedField,
+              updates: [update, ...field.updates],
+              notes: createdNote ? [createdNote, ...updatedField.notes] : updatedField.notes,
+            }
+          }),
+        )
+
+        setRecentUpdates((previous) => [
+          {
+            id: crypto.randomUUID(),
+            actor: currentUser.name,
+            action: `updated ${fields.find((field) => field.id === fieldId)?.name || 'field'} to ${payload.stage}`,
+            type: updatedField.status,
+            at: new Date().toISOString(),
+          },
+          ...previous,
+        ])
+
+        setUpdateFieldId(null)
+        addToast('Field update submitted successfully.')
+      } catch (error) {
+        addToast(error?.message || 'Unable to submit update.')
+      }
+
       return
     }
 
@@ -192,7 +375,7 @@ function App() {
   const visibleFields =
     currentUser.role === 'admin'
       ? fields
-      : fields.filter((field) => field.assignedAgentId === currentUser.id)
+      : fields.filter((field) => String(field.assignedAgentId) === String(currentUser.id))
 
   const safeSelectedField =
     selectedField && visibleFields.some((field) => field.id === selectedField.id)
