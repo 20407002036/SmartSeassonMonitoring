@@ -30,6 +30,12 @@ function App() {
     unreadCount,
     notificationsLoading,
     notificationsError,
+    isLoggingIn,
+    isLoggingOut,
+    isCreatingField,
+    isUpdatingField,
+    assigningFieldIds,
+    markingNotificationIds,
     setActivePage,
     setUpdateFieldId,
     handleLogin,
@@ -72,7 +78,7 @@ function App() {
         ]
 
   if (!currentUser) {
-    return <LoginPage onLogin={handleLogin} loginError={loginError} />
+    return <LoginPage onLogin={handleLogin} loginError={loginError} isSubmitting={isLoggingIn} />
   }
 
   return (
@@ -111,9 +117,10 @@ function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-lg bg-surface-container-low px-3 py-2 text-sm font-semibold text-on-surface"
+              disabled={isLoggingOut}
+              className="rounded-lg bg-surface-container-low px-3 py-2 text-sm font-semibold text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Logout
+              {isLoggingOut ? 'Processing...' : 'Logout'}
             </button>
           </div>
         </div>
@@ -147,6 +154,7 @@ function App() {
             userRole={currentUser.role}
             onCreateField={handleOpenCreateField}
             onAssignAgent={handleAssignAgent}
+            assigningFieldIds={assigningFieldIds}
             onOpenUpdate={handleOpenUpdate}
             onOpenField={handleOpenField}
           />
@@ -165,6 +173,7 @@ function App() {
             fields={fields}
             agents={agents}
             agentsById={agentsById}
+            assigningFieldIds={assigningFieldIds}
             onAssignAgent={handleAssignAgent}
           />
         ) : null}
@@ -177,6 +186,7 @@ function App() {
             error={notificationsError}
             onRefresh={refreshNotifications}
             onMarkAsRead={markOneNotificationRead}
+            markingNotificationIds={markingNotificationIds}
           />
         ) : null}
       </main>
@@ -187,6 +197,7 @@ function App() {
         isOpen={Boolean(updateFieldId)}
         onClose={() => setUpdateFieldId(null)}
         onSubmit={handleSubmitUpdate}
+        isSubmitting={isUpdatingField}
       />
 
       <CreateFieldModal
@@ -194,6 +205,7 @@ function App() {
         agents={agents}
         onClose={() => setIsCreateFieldOpen(false)}
         onSubmit={handleSubmitCreateField}
+        isSubmitting={isCreatingField}
       />
 
       <ToastStack toasts={toasts} onDismiss={dismissToast} />

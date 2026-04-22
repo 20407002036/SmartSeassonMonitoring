@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react'
 import StatusBadge from '../components/StatusBadge'
 
-function FieldManagementPage({ fields, agents, agentsById, userRole, onCreateField, onAssignAgent, onOpenUpdate, onOpenField }) {
+function FieldManagementPage({
+  fields,
+  agents,
+  agentsById,
+  userRole,
+  onCreateField,
+  onAssignAgent,
+  assigningFieldIds,
+  onOpenUpdate,
+  onOpenField,
+}) {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [cropFilter, setCropFilter] = useState('All')
@@ -96,7 +106,8 @@ function FieldManagementPage({ fields, agents, agentsById, userRole, onCreateFie
                       <select
                         value={field.assignedAgentId || ''}
                         onChange={(event) => onAssignAgent(field.id, event.target.value)}
-                        className="rounded-lg bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                        disabled={assigningFieldIds.has(String(field.id))}
+                        className="rounded-lg bg-surface-container-high px-3 py-2 text-sm text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="">Unassigned</option>
                         {agents.map((agent) => (

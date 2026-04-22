@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AGENT_STAGE_OPTIONS } from '../data/mockData'
 
-function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
+function CreateFieldModal({ isOpen, agents, onClose, onSubmit, isSubmitting }) {
   const [name, setName] = useState('')
   const [cropType, setCropType] = useState('')
   const [plantingDate, setPlantingDate] = useState(new Date().toISOString().slice(0, 10))
@@ -20,7 +20,12 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
             <h3 className="text-xl font-bold text-on-surface font-headline">Create Field</h3>
             <p className="mt-1 text-sm text-on-surface-variant">Enter the field details to create a real record.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full bg-surface-container-low p-2 text-on-surface-variant">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="rounded-full bg-surface-container-low p-2 text-on-surface-variant disabled:cursor-not-allowed disabled:opacity-60"
+          >
             ✕
           </button>
         </div>
@@ -28,6 +33,9 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
         <form
           onSubmit={(event) => {
             event.preventDefault()
+            if (isSubmitting) {
+              return
+            }
             onSubmit({
               name: name.trim(),
               cropType: cropType.trim(),
@@ -44,6 +52,7 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
+              disabled={isSubmitting}
               placeholder="e.g. North Ridge 4"
               className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary"
               required
@@ -56,6 +65,7 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
               type="text"
               value={cropType}
               onChange={(event) => setCropType(event.target.value)}
+              disabled={isSubmitting}
               placeholder="e.g. Maize"
               className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary"
               required
@@ -69,6 +79,7 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
                 type="date"
                 value={plantingDate}
                 onChange={(event) => setPlantingDate(event.target.value)}
+                disabled={isSubmitting}
                 className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
@@ -79,6 +90,7 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
               <select
                 value={currentStage}
                 onChange={(event) => setCurrentStage(event.target.value)}
+                disabled={isSubmitting}
                 className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {AGENT_STAGE_OPTIONS.map((option) => (
@@ -95,6 +107,7 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
             <select
               value={assignedAgentId}
               onChange={(event) => setAssignedAgentId(event.target.value)}
+              disabled={isSubmitting}
               className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Unassigned</option>
@@ -114,15 +127,17 @@ function CreateFieldModal({ isOpen, agents, onClose, onSubmit }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface"
+              disabled={isSubmitting}
+              className="flex-1 rounded-xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-3 text-sm font-bold uppercase tracking-wide text-on-primary"
+              disabled={isSubmitting}
+              className="flex-1 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-3 text-sm font-bold uppercase tracking-wide text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Create Field
+              {isSubmitting ? 'Processing...' : 'Create Field'}
             </button>
           </div>
         </form>
