@@ -12,9 +12,9 @@ A full-stack assessment project for monitoring crop progress across multiple fie
 
 ## Tech Stack
 
-- Backend: Django + Django REST Framework + JWT (SimpleJWT) - Hosted on Render
-- Frontend: React + Vite + Tailwind - Hosted on supabase
-- Database: SQLite (default, development), PostgreSQL (supported via env vars) - Hested on Supabase
+- Backend: Django + Django REST Framework + JWT (SimpleJWT) - `Hosted on Render`
+- Frontend: React + Vite + Tailwind - `Hosted on supabase`
+- Database: SQLite (default, development), PostgreSQL (supported via env vars) - `Hested on Supabase`
 
 ## Repository Structure
 
