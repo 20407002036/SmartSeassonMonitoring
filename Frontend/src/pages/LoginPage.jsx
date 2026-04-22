@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function LoginPage({ onLogin, loginError }) {
+function LoginPage({ onLogin, loginError, isSubmitting }) {
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('admin123')
 
@@ -35,6 +35,9 @@ function LoginPage({ onLogin, loginError }) {
             className="mt-8 space-y-5"
             onSubmit={(event) => {
               event.preventDefault()
+              if (isSubmitting) {
+                return
+              }
               onLogin({ username, password })
             }}
           >
@@ -44,6 +47,7 @@ function LoginPage({ onLogin, loginError }) {
                 type="text"
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
+                disabled={isSubmitting}
                 className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
@@ -55,6 +59,7 @@ function LoginPage({ onLogin, loginError }) {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                disabled={isSubmitting}
                 className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
@@ -64,9 +69,10 @@ function LoginPage({ onLogin, loginError }) {
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-3 text-sm font-bold uppercase tracking-wide text-on-primary"
+              disabled={isSubmitting}
+              className="w-full rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-3 text-sm font-bold uppercase tracking-wide text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Sign In
+              {isSubmitting ? 'Processing...' : 'Sign In'}
             </button>
           </form>
         </section>

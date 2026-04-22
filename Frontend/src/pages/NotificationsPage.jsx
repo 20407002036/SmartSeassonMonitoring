@@ -1,4 +1,4 @@
-function NotificationsPage({ notifications, unreadCount, loading, error, onRefresh, onMarkAsRead }) {
+function NotificationsPage({ notifications, unreadCount, loading, error, onRefresh, onMarkAsRead, markingNotificationIds }) {
   return (
     <section className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -14,9 +14,10 @@ function NotificationsPage({ notifications, unreadCount, loading, error, onRefre
           <button
             type="button"
             onClick={onRefresh}
-            className="rounded-xl bg-surface-container-low px-4 py-2 text-sm font-semibold text-on-surface"
+            disabled={loading}
+            className="rounded-xl bg-surface-container-low px-4 py-2 text-sm font-semibold text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Refresh
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </header>
@@ -54,9 +55,10 @@ function NotificationsPage({ notifications, unreadCount, loading, error, onRefre
                   <button
                     type="button"
                     onClick={() => onMarkAsRead(notification.id)}
-                    className="rounded-lg bg-gradient-to-br from-primary to-primary-container px-3 py-2 text-xs font-bold uppercase tracking-wide text-on-primary"
+                    disabled={markingNotificationIds.has(String(notification.id))}
+                    className="rounded-lg bg-gradient-to-br from-primary to-primary-container px-3 py-2 text-xs font-bold uppercase tracking-wide text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Mark Read
+                    {markingNotificationIds.has(String(notification.id)) ? 'Processing...' : 'Mark Read'}
                   </button>
                 ) : null}
               </div>

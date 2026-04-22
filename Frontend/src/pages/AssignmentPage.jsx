@@ -1,4 +1,4 @@
-function AssignmentPage({ fields, agents, agentsById, onAssignAgent }) {
+function AssignmentPage({ fields, agents, agentsById, assigningFieldIds, onAssignAgent }) {
   const workloads = agents.map((agent) => {
     const assigned = fields.filter((field) => field.assignedAgentId === agent.id)
     const atRiskCount = assigned.filter((field) => field.status === 'At Risk').length
@@ -28,7 +28,8 @@ function AssignmentPage({ fields, agents, agentsById, onAssignAgent }) {
                 <select
                   value={field.assignedAgentId || ''}
                   onChange={(event) => onAssignAgent(field.id, event.target.value)}
-                  className="mt-3 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  disabled={assigningFieldIds.has(String(field.id))}
+                  className="mt-3 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="">Unassigned</option>
                   {agents.map((agent) => (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { initialFields, initialRecentUpdates, users } from '../data/mockData'
+import { initialFields, users } from '../data/mockData'
 import {
   API_ENABLED,
   assignField,
@@ -30,7 +30,7 @@ function getFieldStatusFromStage(stage) {
 export function useAppData() {
   const [currentUser, setCurrentUser] = useState(null)
   const [fields, setFields] = useState(initialFields)
-  const [recentUpdates, setRecentUpdates] = useState(initialRecentUpdates)
+  const [recentUpdates, setRecentUpdates] = useState([])
   const [activePage, setActivePage] = useState('dashboard')
   const [loginError, setLoginError] = useState('')
   const [selectedFieldId, setSelectedFieldId] = useState(initialFields[0]?.id || null)
@@ -40,6 +40,12 @@ export function useAppData() {
   const [notifications, setNotifications] = useState([])
   const [notificationsLoading, setNotificationsLoading] = useState(false)
   const [notificationsError, setNotificationsError] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isCreatingField, setIsCreatingField] = useState(false)
+  const [isUpdatingField, setIsUpdatingField] = useState(false)
+  const [assigningFieldIds, setAssigningFieldIds] = useState(new Set())
+  const [markingNotificationIds, setMarkingNotificationIds] = useState(new Set())
 
   const addToast = useCallback((message) => {
     const id = crypto.randomUUID()
@@ -113,6 +119,13 @@ export function useAppData() {
       return
     }
 
+    const idKey = String(notificationId)
+    setMarkingNotificationIds((previous) => {
+      const next = new Set(previous)
+      next.add(idKey)
+      return next
+    })
+
     try {
       const updated = await markNotificationAsRead(notificationId)
       setNotifications((previous) =>
@@ -120,6 +133,12 @@ export function useAppData() {
       )
     } catch (error) {
       addToast(error?.message || 'Unable to mark notification as read.')
+    } finally {
+      setMarkingNotificationIds((previous) => {
+        const next = new Set(previous)
+        next.delete(idKey)
+        return next
+      })
     }
   }, [addToast])
 
@@ -187,8 +206,10 @@ export function useAppData() {
   }, [currentUser, refreshNotifications])
 
   const handleLogin = async ({ username, password }) => {
-    if (API_ENABLED) {
-      try {
+    setIsLoggingIn(true)
+
+    try {
+      if (API_ENABLED) {
         await loginUser({
           username,
           password,
@@ -204,114 +225,139 @@ export function useAppData() {
         setSelectedFieldId(apiFields[0]?.id || null)
         setActivePage('dashboard')
         addToast(`Signed in as ${user.name}`)
-      } catch (error) {
-        setLoginError(error?.message || 'Unable to sign in. Please verify credentials and backend availability.')
+        return
       }
 
-      return
+      const normalizedUsername = username.toLowerCase()
+      const matched = users.find((user) => user.username.toLowerCase() === normalizedUsername && user.password === password)
+
+      if (!matched) {
+        setLoginError('Invalid credentials. Use the demo accounts shown below the heading.')
+        return
+      }
+
+      setLoginError('')
+      setCurrentUser(matched)
+      setActivePage('dashboard')
+      addToast(`Signed in as ${matched.name}`)
+    } catch (error) {
+      setLoginError(error?.message || 'Unable to sign in. Please verify credentials and backend availability.')
+    } finally {
+      setIsLoggingIn(false)
     }
-
-    const normalizedUsername = username.toLowerCase()
-    const matched = users.find((user) => user.username.toLowerCase() === normalizedUsername && user.password === password)
-
-    if (!matched) {
-      setLoginError('Invalid credentials. Use the demo accounts shown below the heading.')
-      return
-    }
-
-    setLoginError('')
-    setCurrentUser(matched)
-    setActivePage('dashboard')
-    addToast(`Signed in as ${matched.name}`)
   }
 
   const handleLogout = async () => {
-    if (API_ENABLED) {
-      await apiLogoutUser()
-    }
+    setIsLoggingOut(true)
 
-    setCurrentUser(null)
-    setApiAgents([])
-    setNotifications([])
-    setNotificationsError('')
-    setActivePage('dashboard')
-    setLoginError('')
+    try {
+      if (API_ENABLED) {
+        await apiLogoutUser()
+      }
+
+      setCurrentUser(null)
+      setApiAgents([])
+      setNotifications([])
+      setNotificationsError('')
+      setActivePage('dashboard')
+      setLoginError('')
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   const handleAssignAgent = async (fieldId, agentId) => {
-    if (API_ENABLED) {
-      try {
-        const updatedField = await assignField(fieldId, agentId || null)
+    const idKey = String(fieldId)
+    setAssigningFieldIds((previous) => {
+      const next = new Set(previous)
+      next.add(idKey)
+      return next
+    })
 
-        setFields((previous) =>
-          previous.map((field) => (field.id === fieldId ? { ...field, ...updatedField } : field)),
-        )
+    try {
+      if (API_ENABLED) {
+        try {
+          const updatedField = await assignField(fieldId, agentId || null)
 
-        const agentName = agentsById[agentId]?.name || 'Unassigned'
-        const target = fields.find((field) => field.id === fieldId)
-        if (target) {
-          addToast(`${target.name} assigned to ${agentName}`)
+          setFields((previous) =>
+            previous.map((field) => (field.id === fieldId ? { ...field, ...updatedField } : field)),
+          )
+
+          const agentName = agentsById[agentId]?.name || 'Unassigned'
+          const target = fields.find((field) => field.id === fieldId)
+          if (target) {
+            addToast(`${target.name} assigned to ${agentName}`)
+          }
+          refreshNotifications()
+        } catch (error) {
+          addToast(error?.message || 'Assignment failed.')
         }
-        refreshNotifications()
-      } catch (error) {
-        addToast(error?.message || 'Assignment failed.')
+
+        return
       }
 
-      return
-    }
+      setFields((previous) =>
+        previous.map((field) =>
+          field.id === fieldId
+            ? {
+                ...field,
+                assignedAgentId: agentId || null,
+              }
+            : field,
+        ),
+      )
 
-    setFields((previous) =>
-      previous.map((field) =>
-        field.id === fieldId
-          ? {
-              ...field,
-              assignedAgentId: agentId || null,
-            }
-          : field,
-      ),
-    )
-
-    const target = fields.find((field) => field.id === fieldId)
-    const agentName = agentsById[agentId]?.name || 'Unassigned'
-    if (target) {
-      addToast(`${target.name} assigned to ${agentName}`)
+      const target = fields.find((field) => field.id === fieldId)
+      const agentName = agentsById[agentId]?.name || 'Unassigned'
+      if (target) {
+        addToast(`${target.name} assigned to ${agentName}`)
+      }
+    } finally {
+      setAssigningFieldIds((previous) => {
+        const next = new Set(previous)
+        next.delete(idKey)
+        return next
+      })
     }
   }
 
   const handleCreateField = async (payload) => {
-    if (API_ENABLED) {
-      try {
+    setIsCreatingField(true)
+
+    try {
+      if (API_ENABLED) {
         const createdField = await createField(payload)
 
         setFields((previous) => [createdField, ...previous])
         setSelectedFieldId(createdField.id)
         addToast(`Created ${createdField.name}.`)
         return createdField
-      } catch (error) {
-        addToast(error?.message || 'Field creation failed.')
-        return null
       }
 
-    }
+      const status = getFieldStatusFromStage(payload.currentStage)
+      const id = `field-${fields.length + 1}`
+      const newField = {
+        id,
+        name: payload.name,
+        cropType: payload.crop_type ?? payload.cropType,
+        plantingDate: payload.plantingDate,
+        currentStage: payload.currentStage,
+        status,
+        assignedAgentId: payload.assignedAgentId || null,
+        updates: [],
+        notes: [],
+      }
 
-    const status = getFieldStatusFromStage(payload.currentStage)
-    const id = `field-${fields.length + 1}`
-    const newField = {
-      id,
-      name: payload.name,
-      cropType: payload.crop_type ?? payload.cropType,
-      plantingDate: payload.plantingDate,
-      currentStage: payload.currentStage,
-      status,
-      assignedAgentId: payload.assignedAgentId || null,
-      updates: [],
-      notes: [],
+      setFields((previous) => [newField, ...previous])
+      setSelectedFieldId(id)
+      addToast(`Created ${newField.name}.`)
+      return newField
+    } catch (error) {
+      addToast(error?.message || 'Field creation failed.')
+      return null
+    } finally {
+      setIsCreatingField(false)
     }
-
-    setFields((previous) => [newField, ...previous])
-    setSelectedFieldId(id)
-    addToast(`Created ${newField.name}.`)
-    return newField
   }
 
   const handleOpenField = (fieldId) => {
@@ -328,107 +374,113 @@ export function useAppData() {
       return
     }
 
-    if (API_ENABLED) {
-      try {
-        const updatedField = await updateFieldStage(fieldId, payload.stage)
-        const createdNote = payload.note?.trim()
-          ? await createFieldNote(fieldId, payload.note.trim())
-          : null
+    setIsUpdatingField(true)
 
-        setFields((previous) =>
-          previous.map((field) => {
-            if (field.id !== fieldId) {
-              return field
-            }
+    try {
+      if (API_ENABLED) {
+        try {
+          const updatedField = await updateFieldStage(fieldId, payload.stage)
+          const createdNote = payload.note?.trim()
+            ? await createFieldNote(fieldId, payload.note.trim())
+            : null
 
-            const update = {
+          setFields((previous) =>
+            previous.map((field) => {
+              if (field.id !== fieldId) {
+                return field
+              }
+
+              const update = {
+                id: crypto.randomUUID(),
+                by: currentUser.name,
+                at: new Date().toISOString(),
+                stage: payload.stage,
+                status: updatedField.status,
+                note: payload.note,
+              }
+
+              return {
+                ...field,
+                ...updatedField,
+                updates: [update, ...field.updates],
+                notes: createdNote ? [createdNote, ...updatedField.notes] : updatedField.notes,
+              }
+            }),
+          )
+
+          setRecentUpdates((previous) => [
+            {
               id: crypto.randomUUID(),
-              by: currentUser.name,
+              actor: currentUser.name,
+              action: `updated ${fields.find((field) => field.id === fieldId)?.name || 'field'} to ${payload.stage}`,
+              type: updatedField.status,
               at: new Date().toISOString(),
-              stage: payload.stage,
-              status: updatedField.status,
-              note: payload.note,
-            }
+            },
+            ...previous,
+          ])
 
-            return {
-              ...field,
-              ...updatedField,
-              updates: [update, ...field.updates],
-              notes: createdNote ? [createdNote, ...updatedField.notes] : updatedField.notes,
-            }
-          }),
-        )
+          setUpdateFieldId(null)
+          addToast('Field update submitted successfully.')
+          refreshNotifications()
+        } catch (error) {
+          addToast(error?.message || 'Unable to submit update.')
+        }
 
-        setRecentUpdates((previous) => [
-          {
-            id: crypto.randomUUID(),
-            actor: currentUser.name,
-            action: `updated ${fields.find((field) => field.id === fieldId)?.name || 'field'} to ${payload.stage}`,
-            type: updatedField.status,
-            at: new Date().toISOString(),
-          },
-          ...previous,
-        ])
-
-        setUpdateFieldId(null)
-        addToast('Field update submitted successfully.')
-        refreshNotifications()
-      } catch (error) {
-        addToast(error?.message || 'Unable to submit update.')
+        return
       }
 
-      return
-    }
+      const status = stageToStatus[payload.stage] || 'Active'
 
-    const status = stageToStatus[payload.stage] || 'Active'
+      setFields((previous) =>
+        previous.map((field) => {
+          if (field.id !== fieldId) {
+            return field
+          }
 
-    setFields((previous) =>
-      previous.map((field) => {
-        if (field.id !== fieldId) {
-          return field
-        }
+          const update = {
+            id: crypto.randomUUID(),
+            by: currentUser.name,
+            at: new Date().toISOString(),
+            stage: payload.stage,
+            status,
+            note: payload.note,
+          }
 
-        const update = {
+          const noteEntry = payload.note
+            ? {
+                id: crypto.randomUUID(),
+                by: currentUser.name,
+                at: update.at,
+                text: payload.note,
+              }
+            : null
+
+          return {
+            ...field,
+            currentStage: payload.stage,
+            status,
+            updates: [update, ...field.updates],
+            notes: noteEntry ? [noteEntry, ...field.notes] : field.notes,
+          }
+        }),
+      )
+
+      setRecentUpdates((previous) => [
+        {
           id: crypto.randomUUID(),
-          by: currentUser.name,
+          actor: currentUser.name,
+          action: `updated ${fields.find((field) => field.id === fieldId)?.name || 'field'} to ${payload.stage}`,
+          type: status,
           at: new Date().toISOString(),
-          stage: payload.stage,
-          status,
-          note: payload.note,
-        }
+        },
+        ...previous,
+      ])
 
-        const noteEntry = payload.note
-          ? {
-              id: crypto.randomUUID(),
-              by: currentUser.name,
-              at: update.at,
-              text: payload.note,
-            }
-          : null
-
-        return {
-          ...field,
-          currentStage: payload.stage,
-          status,
-          updates: [update, ...field.updates],
-          notes: noteEntry ? [noteEntry, ...field.notes] : field.notes,
-        }
-      }),
-    )
-
-    setRecentUpdates((previous) => [
-      {
-        id: crypto.randomUUID(),
-        actor: currentUser.name,
-        action: `updated ${fields.find((field) => field.id === fieldId)?.name || 'field'} to ${payload.stage}`,
-        type: status,
-        at: new Date().toISOString(),
-      },
-      ...previous,
-    ])
-
-    setUpdateFieldId(null)
-    addToast('Field update submitted successfully.')
+      setUpdateFieldId(null)
+      addToast('Field update submitted successfully.')
+    } finally {
+      setIsUpdatingField(false)
+    }
   }
 
   const visibleFields =
@@ -458,6 +510,12 @@ export function useAppData() {
     unreadCount,
     notificationsLoading,
     notificationsError,
+    isLoggingIn,
+    isLoggingOut,
+    isCreatingField,
+    isUpdatingField,
+    assigningFieldIds,
+    markingNotificationIds,
     setActivePage,
     setUpdateFieldId,
     handleLogin,

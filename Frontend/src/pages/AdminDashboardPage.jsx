@@ -94,14 +94,20 @@ function AdminDashboardPage({ fields, recentUpdates, agentsById, onOpenField, on
               <h2 className="text-xl font-bold tracking-tight text-on-surface font-headline">Recent Updates</h2>
             </div>
             <div className="mt-4 space-y-3">
-              {recentUpdates.map((update) => (
-                <div key={update.id} className="rounded-xl bg-surface-container-lowest p-4">
-                  <p className="text-sm text-on-surface">
-                    <strong>{update.actor}</strong> {update.action}
-                  </p>
-                  <p className="mt-1 text-xs text-on-surface-variant">{new Date(update.at).toLocaleString()}</p>
+              {recentUpdates.length ? (
+                recentUpdates.map((update) => (
+                  <div key={update.id} className="rounded-xl bg-surface-container-lowest p-4">
+                    <p className="text-sm text-on-surface">
+                      <strong>{update.actor}</strong> {update.action}
+                    </p>
+                    <p className="mt-1 text-xs text-on-surface-variant">{new Date(update.at).toLocaleString()}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl bg-surface-container-lowest p-4 text-sm text-on-surface-variant">
+                  No recent updates yet.
                 </div>
-              ))}
+              )}
             </div>
           </article>
 
