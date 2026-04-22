@@ -12,3 +12,4 @@ export {
   createFieldNote,
 } from './fieldsApi'
 export { listNotifications, markNotificationAsRead } from './notificationsApi'
+export { listAgents } from './usersApi'

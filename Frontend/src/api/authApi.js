@@ -2,21 +2,12 @@ import { apiRequest } from './httpClient'
 import { toFrontendUser } from './mappers'
 import { clearTokens, getTokens, setTokens } from './tokenStore'
 
-function extractUsername(identifier) {
-  if (!identifier) {
-    return ''
-  }
-
-  const value = String(identifier).trim()
-  return value.includes('@') ? value.split('@')[0] : value
-}
-
-export async function loginUser({ identifier, password }) {
+export async function loginUser({ username, password }) {
   const tokens = await apiRequest('/auth/login/', {
     method: 'POST',
     auth: false,
     body: {
-      username: extractUsername(identifier),
+      username: String(username || '').trim(),
       password,
     },
   })

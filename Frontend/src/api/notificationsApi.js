@@ -23,13 +23,29 @@ export async function listNotifications() {
 
     // Temporary fallback for environments still exposing notifications at root path.
     const fallbackData = await apiRequest('/')
-    return Array.isArray(fallbackData) ? fallbackData.map(toFrontendNotification) : []
+    if (!Array.isArray(fallbackData)) {
+      return []
+    }
+
+    const notificationLike = fallbackData.filter((item) => item && Object.prototype.hasOwnProperty.call(item, 'is_unread'))
+    return notificationLike.map(toFrontendNotification)
   }
 }
 
 export async function markNotificationAsRead(notificationId) {
-  const data = await apiRequest(`/${notificationId}/read/`, {
-    method: 'PUT',
-  })
-  return toFrontendNotification(data)
+  try {
+    const data = await apiRequest(`/notifications/${notificationId}/read/`, {
+      method: 'PUT',
+    })
+    return toFrontendNotification(data)
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 404) {
+      throw error
+    }
+
+    const fallbackData = await apiRequest(`/${notificationId}/read/`, {
+      method: 'PUT',
+    })
+    return toFrontendNotification(fallbackData)
+  }
 }
