@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AGENT_STAGE_OPTIONS } from '../data/mockData'
 
 function UpdateModal({ field, isOpen, onClose, onSubmit }) {
   const [stage, setStage] = useState(field?.currentStage || 'Planted')
   const [note, setNote] = useState('')
-
-  useEffect(() => {
-    if (field) {
-      setStage(field.currentStage)
-      setNote('')
-    }
-  }, [field])
 
   if (!isOpen || !field) {
     return null

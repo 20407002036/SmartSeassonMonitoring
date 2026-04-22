@@ -1,174 +1,58 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import LoginPage from './pages/LoginPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AgentDashboardPage from './pages/AgentDashboardPage'
 import FieldManagementPage from './pages/FieldManagementPage'
 import FieldDetailPage from './pages/FieldDetailPage'
 import AssignmentPage from './pages/AssignmentPage'
+import NotificationsPage from './pages/NotificationsPage'
+import CreateFieldModal from './components/CreateFieldModal'
 import UpdateModal from './components/UpdateModal'
 import ToastStack from './components/ToastStack'
-import { STAGE_PROGRESS, initialFields, initialRecentUpdates, users } from './data/mockData'
-
-const stageToStatus = {
-  Harvested: 'Completed',
-  Ready: 'Active',
-  Growing: 'Active',
-  Planted: 'At Risk',
-}
+import { useAppData } from './state/useAppData'
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null)
-  const [fields, setFields] = useState(initialFields)
-  const [recentUpdates, setRecentUpdates] = useState(initialRecentUpdates)
-  const [activePage, setActivePage] = useState('dashboard')
-  const [loginError, setLoginError] = useState('')
-  const [selectedFieldId, setSelectedFieldId] = useState(initialFields[0]?.id || null)
-  const [updateFieldId, setUpdateFieldId] = useState(null)
-  const [toasts, setToasts] = useState([])
+  const [isCreateFieldOpen, setIsCreateFieldOpen] = useState(false)
+  const {
+    currentUser,
+    fields,
+    recentUpdates,
+    activePage,
+    loginError,
+    updateFieldId,
+    modalField,
+    agents,
+    agentsById,
+    visibleFields,
+    safeSelectedField,
+    toasts,
+    notifications,
+    unreadCount,
+    notificationsLoading,
+    notificationsError,
+    setActivePage,
+    setUpdateFieldId,
+    handleLogin,
+    handleLogout,
+    handleAssignAgent,
+    handleCreateField,
+    handleOpenField,
+    handleOpenUpdate,
+    handleSubmitUpdate,
+    dismissToast,
+    refreshNotifications,
+    markOneNotificationRead,
+  } = useAppData()
 
-  const agents = useMemo(() => users.filter((user) => user.role === 'agent'), [])
-  const agentsById = useMemo(() => {
-    return users.reduce((accumulator, user) => {
-      accumulator[user.id] = user
-      return accumulator
-    }, {})
-  }, [])
-
-  const selectedField = fields.find((field) => field.id === selectedFieldId) || null
-  const modalField = fields.find((field) => field.id === updateFieldId) || null
-
-  const addToast = (message) => {
-    const id = crypto.randomUUID()
-    setToasts((previous) => [...previous, { id, message }])
-    window.setTimeout(() => {
-      setToasts((previous) => previous.filter((toast) => toast.id !== id))
-    }, 3800)
+  const handleOpenCreateField = () => {
+    setIsCreateFieldOpen(true)
   }
 
-  const handleLogin = ({ email, password }) => {
-    const matched = users.find(
-      (user) => user.email.toLowerCase() === email.toLowerCase() && user.password === password,
-    )
-
-    if (!matched) {
-      setLoginError('Invalid credentials. Use the demo accounts shown below the heading.')
-      return
+  const handleSubmitCreateField = async (payload) => {
+    const createdField = await handleCreateField(payload)
+    if (createdField) {
+      setIsCreateFieldOpen(false)
     }
-
-    setLoginError('')
-    setCurrentUser(matched)
-    setActivePage('dashboard')
-    addToast(`Signed in as ${matched.name}`)
-  }
-
-  const handleLogout = () => {
-    setCurrentUser(null)
-    setActivePage('dashboard')
-    setLoginError('')
-  }
-
-  const handleAssignAgent = (fieldId, agentId) => {
-    setFields((previous) =>
-      previous.map((field) =>
-        field.id === fieldId
-          ? {
-              ...field,
-              assignedAgentId: agentId || null,
-            }
-          : field,
-      ),
-    )
-
-    const target = fields.find((field) => field.id === fieldId)
-    const agentName = agentsById[agentId]?.name || 'Unassigned'
-    if (target) {
-      addToast(`${target.name} assigned to ${agentName}`)
-    }
-  }
-
-  const handleCreateField = () => {
-    const now = new Date().toISOString().slice(0, 10)
-    const id = `field-${fields.length + 1}`
-    const newField = {
-      id,
-      name: `New Plot ${fields.length + 1}`,
-      cropType: 'Cassava',
-      plantingDate: now,
-      currentStage: 'Planted',
-      status: 'At Risk',
-      assignedAgentId: null,
-      updates: [],
-      notes: [],
-    }
-
-    setFields((previous) => [newField, ...previous])
-    setSelectedFieldId(id)
-    addToast('New field created. Assign an agent to start tracking.')
-  }
-
-  const handleOpenField = (fieldId) => {
-    setSelectedFieldId(fieldId)
-    setActivePage('detail')
-  }
-
-  const handleOpenUpdate = (fieldId) => {
-    setUpdateFieldId(fieldId)
-  }
-
-  const handleSubmitUpdate = (fieldId, payload) => {
-    if (!currentUser) {
-      return
-    }
-
-    const status = stageToStatus[payload.stage] || 'Active'
-
-    setFields((previous) =>
-      previous.map((field) => {
-        if (field.id !== fieldId) {
-          return field
-        }
-
-        const update = {
-          id: crypto.randomUUID(),
-          by: currentUser.name,
-          at: new Date().toISOString(),
-          stage: payload.stage,
-          status,
-          note: payload.note,
-        }
-
-        const noteEntry = payload.note
-          ? {
-              id: crypto.randomUUID(),
-              by: currentUser.name,
-              at: update.at,
-              text: payload.note,
-            }
-          : null
-
-        return {
-          ...field,
-          currentStage: payload.stage,
-          status,
-          updates: [update, ...field.updates],
-          notes: noteEntry ? [noteEntry, ...field.notes] : field.notes,
-        }
-      }),
-    )
-
-    setRecentUpdates((previous) => [
-      {
-        id: crypto.randomUUID(),
-        actor: currentUser.name,
-        action: `updated ${fields.find((field) => field.id === fieldId)?.name || 'field'} to ${payload.stage}`,
-        type: status,
-        at: new Date().toISOString(),
-      },
-      ...previous,
-    ])
-
-    setUpdateFieldId(null)
-    addToast('Field update submitted successfully.')
   }
 
   const navItems =
@@ -178,26 +62,18 @@ function App() {
           { id: 'management', label: 'Field Management' },
           { id: 'detail', label: 'Field Detail' },
           { id: 'assignment', label: 'User / Assignment' },
+          { id: 'notifications', label: `Notifications (${unreadCount})` },
         ]
       : [
           { id: 'dashboard', label: 'Dashboard' },
           { id: 'management', label: 'Field Management' },
           { id: 'detail', label: 'Field Detail' },
+          { id: 'notifications', label: `Notifications (${unreadCount})` },
         ]
 
   if (!currentUser) {
     return <LoginPage onLogin={handleLogin} loginError={loginError} />
   }
-
-  const visibleFields =
-    currentUser.role === 'admin'
-      ? fields
-      : fields.filter((field) => field.assignedAgentId === currentUser.id)
-
-  const safeSelectedField =
-    selectedField && visibleFields.some((field) => field.id === selectedField.id)
-      ? selectedField
-      : visibleFields[0] || null
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -269,7 +145,7 @@ function App() {
             agents={agents}
             agentsById={agentsById}
             userRole={currentUser.role}
-            onCreateField={handleCreateField}
+            onCreateField={handleOpenCreateField}
             onAssignAgent={handleAssignAgent}
             onOpenUpdate={handleOpenUpdate}
             onOpenField={handleOpenField}
@@ -292,19 +168,35 @@ function App() {
             onAssignAgent={handleAssignAgent}
           />
         ) : null}
+
+        {activePage === 'notifications' ? (
+          <NotificationsPage
+            notifications={notifications}
+            unreadCount={unreadCount}
+            loading={notificationsLoading}
+            error={notificationsError}
+            onRefresh={refreshNotifications}
+            onMarkAsRead={markOneNotificationRead}
+          />
+        ) : null}
       </main>
 
       <UpdateModal
+        key={`${updateFieldId || 'none'}-${Boolean(updateFieldId)}`}
         field={modalField}
         isOpen={Boolean(updateFieldId)}
         onClose={() => setUpdateFieldId(null)}
         onSubmit={handleSubmitUpdate}
       />
 
-      <ToastStack
-        toasts={toasts}
-        onDismiss={(id) => setToasts((previous) => previous.filter((toast) => toast.id !== id))}
+      <CreateFieldModal
+        isOpen={isCreateFieldOpen}
+        agents={agents}
+        onClose={() => setIsCreateFieldOpen(false)}
+        onSubmit={handleSubmitCreateField}
       />
+
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

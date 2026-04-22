@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 function LoginPage({ onLogin, loginError }) {
-  const [email, setEmail] = useState('admin@smartseason.io')
+  const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('admin123')
 
   return (
@@ -27,23 +27,23 @@ function LoginPage({ onLogin, loginError }) {
           <p className="mt-2 text-sm text-on-surface-variant">Use one of the demo accounts below to explore role-based screens.</p>
 
           <div className="mt-4 rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
-            <p>Admin: admin@smartseason.io / admin123</p>
-            <p>Agent: agent@smartseason.io / agent123</p>
+            <p>Admin: admin / admin123</p>
+            <p>Agent: agent / agent123</p>
           </div>
 
           <form
             className="mt-8 space-y-5"
             onSubmit={(event) => {
               event.preventDefault()
-              onLogin({ email, password })
+              onLogin({ username, password })
             }}
           >
             <label className="block text-sm font-semibold text-on-surface-variant">
-              Email
+              Username
               <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
                 className="mt-2 w-full rounded-xl bg-surface-container-high px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
