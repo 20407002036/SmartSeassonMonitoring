@@ -176,3 +176,8 @@ Notification routing is namespaced under:
 - This repository is a monorepo with separate backend and frontend apps.
 - Backend and frontend can run independently for local evaluation.
 - Frontend can run in either API mode or mock-data mode via `VITE_USE_API`.
+
+
+## Build sketches 
+<img width="1831" height="357" alt="image" src="https://github.com/user-attachments/assets/c3044b3f-3911-4b39-92d9-40b4b86e550a" />
+
