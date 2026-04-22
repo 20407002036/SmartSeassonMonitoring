@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
 function LoginPage({ onLogin, loginError, isSubmitting }) {
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin123')
+  const [username, setUsername] = useState('grace.admin')
+  const [password, setPassword] = useState('Harvest@2026')
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-surface via-surface-container-low to-surface-container-high p-6 md:p-10">
@@ -27,8 +27,10 @@ function LoginPage({ onLogin, loginError, isSubmitting }) {
           <p className="mt-2 text-sm text-on-surface-variant">Use one of the demo accounts below to explore role-based screens.</p>
 
           <div className="mt-4 rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
-            <p>Admin: admin / admin123</p>
-            <p>Agent: agent / agent123</p>
+            <p>grace.admin / Harvest@2026</p>
+            <p>daniel.admin / Fields#2026</p>
+            <p>faith.agent / SeasonTrack!7</p>
+            <p>mercy.agent / GreenFarm@9</p>
           </div>
 
           <form
