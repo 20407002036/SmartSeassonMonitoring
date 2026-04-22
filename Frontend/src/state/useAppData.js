@@ -132,7 +132,8 @@ export function useAppData() {
 
     async function bootstrapSession() {
       try {
-        const [user, apiFields, agentsList] = await Promise.all([getCurrentUser(), listFields(), listAgents()])
+        const [user, apiFields] = await Promise.all([getCurrentUser(), listFields()])
+        const agentsList = user.role === 'admin' ? await listAgents().catch(() => []) : []
         if (!isMounted) {
           return
         }
@@ -193,7 +194,8 @@ export function useAppData() {
           password,
         })
 
-        const [user, apiFields, agentsList] = await Promise.all([getCurrentUser(), listFields(), listAgents()])
+        const [user, apiFields] = await Promise.all([getCurrentUser(), listFields()])
+        const agentsList = user.role === 'admin' ? await listAgents().catch(() => []) : []
 
         setLoginError('')
         setCurrentUser(user)
