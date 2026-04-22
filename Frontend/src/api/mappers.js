@@ -51,14 +51,66 @@ export function toFrontendNote(note) {
   }
 }
 
+function toFrontendUpdate(update, fallback) {
+  if (!update || typeof update !== 'object') {
+    return null
+  }
+
+  const stageValue =
+    update.stage ||
+    update.current_stage ||
+    update.new_stage ||
+    update.to_stage ||
+    fallback.currentStage
+
+  const normalizedStage = stageValue && STAGE_LABELS[stageValue] ? toFrontendStage(stageValue) : stageValue
+
+  const statusValue = update.status || update.new_status || fallback.status
+  const normalizedStatus = statusValue && STATUS_LABELS[statusValue] ? toFrontendStatus(statusValue) : statusValue
+
+  return {
+    id: String(update.id || `${update.created_at || update.at || update.updated_at || 'update'}-${update.by || update.author?.username || 'unknown'}`),
+    by:
+      update.by ||
+      update.author?.full_name ||
+      update.author?.username ||
+      update.actor?.full_name ||
+      update.actor?.username ||
+      'Unknown',
+    at: update.at || update.created_at || update.updated_at || new Date().toISOString(),
+    stage: normalizedStage || fallback.currentStage,
+    status: normalizedStatus || fallback.status,
+    note: update.note || update.comment || update.description || '',
+  }
+}
+
 export function toFrontendField(field) {
+  const fallback = {
+    currentStage: toFrontendStage(field.current_stage),
+    status: toFrontendStatus(field.status),
+  }
+
+  const mappedNotes = Array.isArray(field.notes) ? field.notes.map(toFrontendNote) : []
+  const mappedUpdates = Array.isArray(field.updates)
+    ? field.updates.map((item) => toFrontendUpdate(item, fallback)).filter(Boolean)
+    : []
+
+  const noteBackfilledUpdates = mappedNotes.map((note) => ({
+    id: `note-${note.id}`,
+    by: note.by,
+    at: note.at,
+    stage: fallback.currentStage,
+    status: fallback.status,
+    note: note.text,
+  }))
+
   return {
     id: String(field.id),
     name: field.name,
     cropType: field.crop_type,
     plantingDate: field.planting_date,
-    currentStage: toFrontendStage(field.current_stage),
-    status: toFrontendStatus(field.status),
+    currentStage: fallback.currentStage,
+    status: fallback.status,
     assignedAgentId: field.assigned_to?.id ? String(field.assigned_to.id) : null,
     assignedAgent: field.assigned_to
       ? {
@@ -68,8 +120,8 @@ export function toFrontendField(field) {
           role: field.assigned_to.role,
         }
       : null,
-    notes: Array.isArray(field.notes) ? field.notes.map(toFrontendNote) : [],
-    updates: [],
+    notes: mappedNotes,
+    updates: mappedUpdates.length ? mappedUpdates : noteBackfilledUpdates,
     raw: field,
   }
 }

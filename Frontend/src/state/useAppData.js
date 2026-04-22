@@ -5,9 +5,11 @@ import {
   assignField,
   createField,
   createFieldNote,
+  getFieldById,
   getCurrentUser,
   hasAccessToken,
   listAgents,
+  listFieldNotes,
   listFields,
   listNotifications,
   loginUser,
@@ -25,6 +27,21 @@ const stageToStatus = {
 
 function getFieldStatusFromStage(stage) {
   return stageToStatus[stage] || 'Active'
+}
+
+function buildUpdatesFromNotes(field, notes) {
+  if (!Array.isArray(notes)) {
+    return []
+  }
+
+  return notes.map((note) => ({
+    id: `note-${field.id}-${note.id}`,
+    by: note.by,
+    at: note.at,
+    stage: field.currentStage,
+    status: field.status,
+    note: note.text,
+  }))
 }
 
 export function useAppData() {
@@ -142,6 +159,74 @@ export function useAppData() {
     }
   }, [addToast])
 
+  const refreshFieldDetails = useCallback(async (fieldId) => {
+    if (!API_ENABLED || !currentUser || !fieldId) {
+      return
+    }
+
+    try {
+      const [fieldDetail, notes] = await Promise.all([
+        getFieldById(fieldId).catch(() => null),
+        listFieldNotes(fieldId).catch(() => null),
+      ])
+
+      setFields((previous) =>
+        previous.map((field) => {
+          if (field.id !== String(fieldId)) {
+            return field
+          }
+
+          const mergedField = fieldDetail ? { ...field, ...fieldDetail } : field
+          const mergedNotes = Array.isArray(notes) ? notes : mergedField.notes
+          const mergedUpdates =
+            Array.isArray(mergedField.updates) && mergedField.updates.length
+              ? mergedField.updates
+              : buildUpdatesFromNotes(mergedField, mergedNotes)
+
+          return {
+            ...mergedField,
+            notes: mergedNotes,
+            updates: mergedUpdates,
+          }
+        }),
+      )
+    } catch {
+      // Silently ignore periodic detail refresh failures.
+    }
+  }, [currentUser])
+
+  const refreshFields = useCallback(async () => {
+    if (!API_ENABLED || !currentUser) {
+      return
+    }
+
+    try {
+      const apiFields = await listFields()
+
+      setFields((previous) =>
+        apiFields.map((field) => {
+          const previousField = previous.find((item) => item.id === field.id)
+          if (!previousField) {
+            return field
+          }
+
+          return {
+            ...field,
+            notes: field.notes?.length ? field.notes : previousField.notes,
+            updates: field.updates?.length ? field.updates : previousField.updates,
+          }
+        }),
+      )
+
+      if (currentUser.role === 'admin') {
+        const agentsList = await listAgents().catch(() => [])
+        setApiAgents(agentsList)
+      }
+    } catch {
+      // Silently ignore periodic list refresh failures.
+    }
+  }, [currentUser])
+
   useEffect(() => {
     if (!API_ENABLED || !hasAccessToken()) {
       return
@@ -198,12 +283,66 @@ export function useAppData() {
 
     const pollId = window.setInterval(() => {
       refreshNotifications()
-    }, 60000)
+    }, 15000)
 
     return () => {
       window.clearInterval(pollId)
     }
   }, [currentUser, refreshNotifications])
+
+  useEffect(() => {
+    if (!API_ENABLED || !currentUser || !selectedFieldId) {
+      return
+    }
+
+    const timerId = window.setTimeout(() => {
+      refreshFieldDetails(selectedFieldId)
+    }, 0)
+
+    const pollId = window.setInterval(() => {
+      refreshFieldDetails(selectedFieldId)
+    }, 15000)
+
+    return () => {
+      window.clearTimeout(timerId)
+      window.clearInterval(pollId)
+    }
+  }, [currentUser, selectedFieldId, refreshFieldDetails])
+
+  useEffect(() => {
+    if (!API_ENABLED || !currentUser) {
+      return
+    }
+
+    const timerId = window.setTimeout(() => {
+      refreshFields()
+    }, 0)
+
+    const pollId = window.setInterval(() => {
+      refreshFields()
+    }, 15000)
+
+    return () => {
+      window.clearTimeout(timerId)
+      window.clearInterval(pollId)
+    }
+  }, [currentUser, refreshFields])
+
+  useEffect(() => {
+    if (!API_ENABLED) {
+      return
+    }
+
+    const fromNotifications = notifications.map((notification) => ({
+      id: `notification-${notification.id}`,
+      actor: notification.raw?.actor?.full_name || notification.raw?.actor?.username || 'Field Agent',
+      action: `updated ${notification.fieldName} to ${notification.newStatus || 'a new status'}`,
+      type: notification.newStatus || 'Active',
+      at: notification.createdAt,
+    }))
+
+    setRecentUpdates(fromNotifications)
+  }, [notifications])
 
   const handleLogin = async ({ username, password }) => {
     setIsLoggingIn(true)
@@ -363,6 +502,9 @@ export function useAppData() {
   const handleOpenField = (fieldId) => {
     setSelectedFieldId(fieldId)
     setActivePage('detail')
+    if (API_ENABLED) {
+      refreshFieldDetails(fieldId)
+    }
   }
 
   const handleOpenUpdate = (fieldId) => {
@@ -421,6 +563,7 @@ export function useAppData() {
 
           setUpdateFieldId(null)
           addToast('Field update submitted successfully.')
+          refreshFieldDetails(fieldId)
           refreshNotifications()
         } catch (error) {
           addToast(error?.message || 'Unable to submit update.')
