@@ -40,3 +40,9 @@ class UserApiTests(APITestCase):
 		self.client.force_authenticate(user=self.agent)
 		agent_response = self.client.get(reverse("field-agent-list"))
 		self.assertEqual(agent_response.status_code, status.HTTP_403_FORBIDDEN)
+
+	def test_health_endpoint_returns_ok(self):
+		response = self.client.get(reverse("health"))
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data, {"status": "ok"})
